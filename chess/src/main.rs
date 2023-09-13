@@ -2,19 +2,64 @@ use std::io;
 use std::io::prelude::*;
 
 use crate::board::*;
+use crate::selection::*;
+use crate::moves::*;
+use crate::move_execution::*;
 
 pub mod board;
+pub mod selection;
+pub mod moves;
+pub mod move_execution;
 
 
 fn main()
 {
-    let board: Board = initialize_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    let mut board: Board = create_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     loop
     {
         draw_board(&board);
 
-        let piece_position = get_position("select piece (file, rank)");
+
+        let mut piece = Piece{ piece_type: Piece_Type::None, piece_color: Color::None, position: Position{ x: 0, y: 0 }, move_count: 0 };
+
+        loop
+        {
+            let piece_position = get_position("select piece (file, rank)");
+
+            if select_piece(&board, &mut piece, &piece_position)
+            {
+                println!("valid piece");
+                break;
+            }
+
+            println!("invalid piece");
+        }
+
+
+        println!("possible moves:");
+
+        let possible_moves = get_moves(&board, &piece);
+
+        for position in possible_moves.iter()
+        {
+            println!("{0} {1}", position.x + 1, position.y + 1);
+        }
+
+
+        loop
+        {
+            let move_position = get_position("select move position (file, rank)");
+
+            if make_move(&mut board, &piece, &move_position, &possible_moves)
+            {
+                println!("valid move");
+
+                break;
+            }
+
+            println!("invalid move");
+        }
     }
 }
 
@@ -30,8 +75,8 @@ fn get_position(message: &str) -> Position
 
     let numbers = input.split_whitespace().collect::<Vec<&str>>();
         
-    let files = numbers[0].parse::<u32>().unwrap();
-    let ranks = numbers[1].parse::<u32>().unwrap();
+    let files = numbers[0].parse::<i32>().unwrap();
+    let ranks = numbers[1].parse::<i32>().unwrap();
 
 
     return Position{ x: files - 1, y: ranks - 1 };
@@ -46,11 +91,11 @@ fn draw_board(board: &Board)
 
         for x in 0..board.width
         {
-            let square = board_piece(board, &Position{ x: x, y: y });
+            let piece = board_piece(board, &Position{ x: x, y: y });
 
             let mut symbol: char;
 
-            match square.piece_type
+            match piece.piece_type
             {
                 Piece_Type::King => symbol = 'k',
                 Piece_Type::Queen => symbol = 'q',
@@ -61,7 +106,7 @@ fn draw_board(board: &Board)
                 _ => symbol = ' '
             }
 
-            if square.piece_color == Color::White
+            if piece.piece_color == Color::White
             {
                 symbol = symbol.to_ascii_uppercase();
             }

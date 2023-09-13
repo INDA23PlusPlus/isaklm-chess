@@ -1,4 +1,4 @@
-pub fn initialize_board(fen_string: &str) -> Board
+pub fn create_board(fen_string: &str) -> Board
 {
     let mut board = Board
     {
@@ -15,7 +15,8 @@ pub fn initialize_board(fen_string: &str) -> Board
             board.pieces.push(Piece{ 
                 piece_type: Piece_Type::None, 
                 piece_color: Color::None,
-                position: Position{ x: x, y: y }
+                position: Position{ x: x, y: y },
+                move_count: 0
              }); // initialize the board to be empty
         }
     }
@@ -26,8 +27,8 @@ pub fn initialize_board(fen_string: &str) -> Board
 
     let positions = fen_segments[0];
 
-    let mut y = board.height - 1;
-    let mut x = 0;
+    let mut y: i32 = board.height - 1;
+    let mut x: i32 = 0;
 
     for (_i, symbol) in positions.chars().enumerate()
     {
@@ -38,7 +39,7 @@ pub fn initialize_board(fen_string: &str) -> Board
         }
         else if symbol.is_numeric()
         {
-            x += symbol.to_digit(10).unwrap();
+            x += symbol.to_digit(10).unwrap() as i32;
         }
         else if symbol.is_alphabetic()
         {
@@ -66,7 +67,7 @@ pub fn initialize_board(fen_string: &str) -> Board
             }
 
 
-            let index = board_index(&board, &Position{ x: x, y: y });
+            let index = board_index(board.width, &Position{ x: x, y: y });
 
             board.pieces[index].piece_type = piece_type;
             board.pieces[index].piece_color = piece_color;
@@ -84,14 +85,26 @@ pub fn initialize_board(fen_string: &str) -> Board
     return board;
 }
 
-pub fn board_index(board: &Board, position: &Position) -> usize
+pub fn board_index(width: i32, position: &Position) -> usize
 {
-    return (position.y * board.width + position.x) as usize;
+    return (position.y * width + position.x) as usize;
 }
 
 pub fn board_piece(board: &Board, position: &Position) -> Piece
 {
-    return board.pieces[board_index(board, position)].clone();
+    return board.pieces[board_index(board.width, position)].clone();
+}
+
+pub fn inside_board(board: &Board, position: &Position) -> bool
+{
+    let mut inside = false;
+
+    if position.x >= 0 && position.x < board.width && position.y >= 0 && position.y < board.height
+    {
+        inside = true;
+    }
+
+    return inside;
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -113,21 +126,22 @@ pub struct Piece // a piece on the board, empty squares have None pieces
 {
     pub piece_type: Piece_Type,
     pub piece_color: Color,
-    pub position: Position
+    pub position: Position,
+    pub move_count: i32
 }
 
 #[derive(Clone)]
 pub struct Position
 {
-    pub x: u32,
-    pub y: u32
+    pub x: i32,
+    pub y: i32
 }
 
 #[derive(Clone)]
 pub struct Board
 {
-    pub width: u32,
-    pub height: u32,
+    pub width: i32,
+    pub height: i32,
     pub pieces: Vec<Piece>,
     pub active_player: Color // only White or Black is ever used
 }
