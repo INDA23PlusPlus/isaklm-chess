@@ -76,6 +76,8 @@ pub fn add_pawn_moves(board: &Board, piece: &Piece, possible_moves: &mut Vec<Pos
     }
 
 
+    let mut blocked = false;
+
     {
         let position = Position{ x: piece.position.x, y: piece.position.y + offset_y };
 
@@ -83,13 +85,17 @@ pub fn add_pawn_moves(board: &Board, piece: &Piece, possible_moves: &mut Vec<Pos
         {
             add_single_move(board, piece, &position, possible_moves);
         }
+        else
+        {
+            blocked = true;
+        }
     }
 
     if piece.move_count == 0
     {
         let position = Position{ x: piece.position.x, y: piece.position.y + offset_y * 2 };
 
-        if inside_board(board, &position) && (board_piece(board, &position).piece_color == Color::None)
+        if !blocked && inside_board(board, &position) && (board_piece(board, &position).piece_color == Color::None)
         {
             add_single_move(board, piece, &position, possible_moves);
         }
@@ -119,6 +125,45 @@ pub fn add_pawn_moves(board: &Board, piece: &Piece, possible_moves: &mut Vec<Pos
         if inside_board(board, &position) && (board_piece(board, &position).piece_color == enemy_color)
         {
             add_single_move(board, piece, &position, possible_moves);
+        }
+    }
+
+
+    add_en_passant_moves(board, piece, possible_moves);
+}
+
+fn add_en_passant_moves(board: &Board, piece: &Piece, possible_moves: &mut Vec<Position>)
+{
+    let piece_x = piece.position.x as usize;
+
+    if piece.piece_color == Color::White && piece.position.y == 4
+    {
+        if piece.position.x > 0 && board.white_en_passant_moves[piece_x - 1]
+        {
+            let position = Position{ x: piece.position.x - 1, y: piece.position.y + 1 };
+
+            add_single_move(board, piece, &position, possible_moves)
+        }
+        if piece.position.x < (board.width - 1) && board.white_en_passant_moves[piece_x + 1]
+        {
+            let position = Position{ x: piece.position.x + 1, y: piece.position.y + 1 };
+            
+            add_single_move(board, piece, &position, possible_moves)
+        }
+    }
+    else if piece.piece_color == Color::Black && piece.position.y == 3
+    {
+        if piece.position.x > 0 && board.black_en_passant_moves[piece_x - 1]
+        {
+            let position = Position{ x: piece.position.x - 1, y: piece.position.y - 1 };
+
+            add_single_move(board, piece, &position, possible_moves)
+        }
+        if piece.position.x < (board.width - 1) && board.black_en_passant_moves[piece_x + 1]
+        {
+            let position = Position{ x: piece.position.x + 1, y: piece.position.y - 1 };
+            
+            add_single_move(board, piece, &position, possible_moves)
         }
     }
 }

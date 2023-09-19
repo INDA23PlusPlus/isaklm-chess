@@ -1,90 +1,3 @@
-pub fn create_board(fen_string: &str) -> Board
-{
-    let mut board = Board
-    {
-        width: 8,
-        height: 8,
-        pieces: Vec::new(),
-        active_player: Color::White
-    };
-
-    for y in 0..board.height
-    {
-        for x in 0..board.width
-        {
-            board.pieces.push(Piece{ 
-                piece_type: Piece_Type::None, 
-                piece_color: Color::None,
-                position: Position{ x: x, y: y },
-                move_count: 0
-             }); // initialize the board to be empty
-        }
-    }
-
-
-    let fen_segments = fen_string.split_whitespace().collect::<Vec<&str>>();
-
-
-    let positions = fen_segments[0];
-
-    let mut y: i32 = board.height - 1;
-    let mut x: i32 = 0;
-
-    for (_i, symbol) in positions.chars().enumerate()
-    {
-        if symbol == '/'
-        {
-            y -= 1;
-            x = 0;
-        }
-        else if symbol.is_numeric()
-        {
-            x += symbol.to_digit(10).unwrap() as i32;
-        }
-        else if symbol.is_alphabetic()
-        {
-            let piece_type;
-            let piece_color;
-
-            if symbol.is_ascii_uppercase()
-            {
-                piece_color = Color::White;
-            }
-            else 
-            {
-                piece_color = Color::Black;
-            }
-
-            match symbol.to_ascii_lowercase()
-            {
-                'k' => piece_type = Piece_Type::King,
-                'q' => piece_type = Piece_Type::Queen,
-                'r' => piece_type = Piece_Type::Rook,
-                'b' => piece_type = Piece_Type::Bishop,
-                'n' => piece_type = Piece_Type::Knight,
-                'p' => piece_type = Piece_Type::Pawn,
-                _ => piece_type = Piece_Type::None
-            }
-
-
-            let index = board_index(board.width, &Position{ x: x, y: y });
-
-            board.pieces[index].piece_type = piece_type;
-            board.pieces[index].piece_color = piece_color;
-
-            x += 1;
-        }
-    }
-
-
-    if fen_segments[1] == "b"
-    {
-        board.active_player = Color::Black;
-    }
-
-    return board;
-}
-
 pub fn board_index(width: i32, position: &Position) -> usize
 {
     return (position.y * width + position.x) as usize;
@@ -93,6 +6,11 @@ pub fn board_index(width: i32, position: &Position) -> usize
 pub fn board_piece(board: &Board, position: &Position) -> Piece
 {
     return board.pieces[board_index(board.width, position)].clone();
+}
+
+pub fn place_piece(board: &mut Board, piece: &Piece)
+{
+    (*board).pieces[board_index(board.width, &piece.position)] = piece.clone();
 }
 
 pub fn inside_board(board: &Board, position: &Position) -> bool
@@ -105,6 +23,42 @@ pub fn inside_board(board: &Board, position: &Position) -> bool
     }
 
     return inside;
+}
+
+pub fn is_empty(board: &Board, position: &Position) -> bool
+{
+    return board_piece(board, position).piece_type == Piece_Type::None;
+}
+
+pub fn reset_en_passant(board: &mut Board)
+{
+    for i in 0..board.width
+    {
+        board.white_en_passant_moves[i as usize] = false;
+        board.black_en_passant_moves[i as usize] = false;
+    }
+}
+
+pub fn add_en_passant(board: &mut Board, piece: &Piece, position: &Position)
+{
+    let move_y = position.y as usize;
+
+    if piece.piece_type == Piece_Type::Pawn && piece.move_count == 0
+    {
+        if piece.piece_color == Color::White && move_y == 3
+        {
+            board.black_en_passant_moves[piece.position.x as usize] = true;
+        }
+        else if piece.piece_color == Color::Black && move_y == 4
+        {
+            board.white_en_passant_moves[piece.position.x as usize] = true;
+        }
+    }
+}
+
+pub fn empty_piece(position: &Position) -> Piece
+{
+    return Piece{ piece_type: Piece_Type::None, piece_color: Color::None, position: position.clone(), move_count: 0 };
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -143,5 +97,10 @@ pub struct Board
     pub width: i32,
     pub height: i32,
     pub pieces: Vec<Piece>,
-    pub active_player: Color // only White or Black is ever used
+    pub active_player: Color, // only White or Black is ever used
+
+    pub white_en_passant_moves: Vec<bool>,
+    pub black_en_passant_moves: Vec<bool>,
+
+    pub promotion: bool
 }

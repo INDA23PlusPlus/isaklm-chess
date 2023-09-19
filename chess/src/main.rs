@@ -2,11 +2,13 @@ use std::io;
 use std::io::prelude::*;
 
 use crate::board::*;
+use crate::board_initialization::*;
 use crate::selection::*;
 use crate::moves::*;
 use crate::move_execution::*;
 
 pub mod board;
+pub mod board_initialization;
 pub mod selection;
 pub mod moves;
 pub mod move_execution;
@@ -20,45 +22,128 @@ fn main()
     {
         draw_board(&board);
 
-
-        let mut piece = Piece{ piece_type: Piece_Type::None, piece_color: Color::None, position: Position{ x: 0, y: 0 }, move_count: 0 };
+        if board.active_player == Color::White
+        {
+            println!("white's turn")
+        }
+        else
+        {
+            println!("black's turn")
+        }
 
         loop
         {
-            let piece_position = get_position("select piece (file, rank)");
+            println!("do you want to castle? (q/k/no)");
 
-            if select_piece(&board, &mut piece, &piece_position)
+            let mut input = String::new();
+
+            io::stdin().read_line(&mut input).expect("Error");
+
+
+            if input.trim() == "q" || input.trim() == "k"
             {
-                println!("valid piece");
+                let mut queenside = true;
+
+                if input.trim() == "k"
+                {
+                    queenside = false;
+                }
+
+
+                if castle(&mut board, queenside)
+                {
+                    println!("valid castling");
+
+                    break;
+                }
+                
+                println!("invalid castling");
+            }
+            else
+            {
+                play_turn(&mut board);
+
                 break;
             }
-
-            println!("invalid piece");
         }
+    }
+}
 
+fn play_turn(board: &mut Board)
+{
+    let mut piece = Piece{ piece_type: Piece_Type::None, piece_color: Color::None, position: Position{ x: 0, y: 0 }, move_count: 0 };
 
-        println!("possible moves:");
+    loop
+    {
+        let piece_position = get_position("select piece (file, rank)");
 
-        let possible_moves = get_moves(&board, &piece);
-
-        for position in possible_moves.iter()
+        if select_piece(board, &mut piece, &piece_position)
         {
-            println!("{0} {1}", position.x + 1, position.y + 1);
+            println!("valid piece");
+            break;
         }
 
+        println!("invalid piece");
+    }
 
+
+    println!("possible moves:");
+
+    let possible_moves = get_moves(board, &piece);
+
+    for position in possible_moves.iter()
+    {
+        println!("{0} {1}", position.x + 1, position.y + 1);
+    }
+
+
+    let mut move_position;
+
+    loop
+    {
+        move_position = get_position("select move position (file, rank)");
+
+        if make_move(board, &piece, &move_position, &possible_moves)
+        {
+            println!("valid move");
+
+            break;
+        }
+
+        println!("invalid move");
+    }
+
+
+    if board.promotion
+    {
         loop
         {
-            let move_position = get_position("select move position (file, rank)");
+            println!("promote to q/r/b/n");
 
-            if make_move(&mut board, &piece, &move_position, &possible_moves)
+            let mut input = String::new();
+
+            io::stdin().read_line(&mut input).expect("Error");
+
+
+            let mut new_piece_type;
+
+            match input.trim()
             {
-                println!("valid move");
+                "q" => new_piece_type = Piece_Type::Queen,
+                "r" => new_piece_type = Piece_Type::Rook,
+                "b" => new_piece_type = Piece_Type::Bishop,
+                "n" => new_piece_type = Piece_Type::Knight,
+                _ => new_piece_type = Piece_Type::None
+            }
+
+            if make_promotion(board, &move_position, new_piece_type)
+            {
+                println!("valid promotion");
 
                 break;
             }
 
-            println!("invalid move");
+            println!("invalid promotion");
         }
     }
 }
