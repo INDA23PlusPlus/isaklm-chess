@@ -11,7 +11,7 @@ pub fn select_piece(board: &Board, piece: &mut Piece, position: &Position) -> bo
 
         if piece.piece_color == board.active_player
         {
-            let possible_moves = get_moves(board, &(*piece).clone());
+            let possible_moves = get_valid_moves(board, &(*piece).clone());
 
             if possible_moves.len() > 0
             {

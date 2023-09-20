@@ -5,13 +5,17 @@ use crate::board::*;
 use crate::board_initialization::*;
 use crate::selection::*;
 use crate::moves::*;
-use crate::move_execution::*;
+use crate::promotion::*;
+use crate::castling::*;
+use crate::checkmate::*;
 
 pub mod board;
 pub mod board_initialization;
 pub mod selection;
 pub mod moves;
-pub mod move_execution;
+pub mod promotion;
+pub mod castling;
+pub mod checkmate;
 
 
 fn main()
@@ -66,6 +70,23 @@ fn main()
                 break;
             }
         }
+
+
+        checkmate(&mut board);
+
+        if board.checkmate != Color::None
+        {
+            if board.checkmate == Color::White
+            {
+                println!("white checkmate");
+            }
+            else
+            {
+                println!("black checkmate");
+            }
+
+            break;
+        }
     }
 }
 
@@ -89,7 +110,7 @@ fn play_turn(board: &mut Board)
 
     println!("possible moves:");
 
-    let possible_moves = get_moves(board, &piece);
+    let possible_moves = get_valid_moves(board, &piece);
 
     for position in possible_moves.iter()
     {

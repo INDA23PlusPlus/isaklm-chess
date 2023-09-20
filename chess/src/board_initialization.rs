@@ -12,7 +12,9 @@ pub fn create_board(fen_string: &str) -> Board
         white_en_passant_moves: Vec::new(),
         black_en_passant_moves: Vec::new(),
 
-        promotion: false
+        promotion: false,
+
+        checkmate: Color::None
     };
 
     for y in 0..board.height

@@ -1,6 +1,25 @@
 use crate::board::*;
+use crate::promotion::*;
 
-pub fn get_moves(board: &Board, piece: &Piece) -> Vec<Position>
+pub fn get_valid_moves(board: &Board, piece: &Piece) -> Vec<Position>
+{
+    let mut valid_moves: Vec<Position> = vec![];
+
+    
+    let possible_moves = get_all_moves(board, piece);
+
+    for position in possible_moves.iter()
+    {
+        if !move_results_in_check(board, piece, position, &possible_moves)
+        {
+            valid_moves.push(position.clone());
+        }
+    }
+    
+    return valid_moves;
+}
+
+pub fn get_all_moves(board: &Board, piece: &Piece) -> Vec<Position>
 {
     let mut possible_moves: Vec<Position> = vec![];
 
@@ -168,6 +187,19 @@ fn add_en_passant_moves(board: &Board, piece: &Piece, possible_moves: &mut Vec<P
     }
 }
 
+fn catch_with_en_passant(board: &mut Board, piece: &Piece, position: &Position)
+{
+    if piece.piece_type == Piece_Type::Pawn
+    {
+        if board_piece(board, position).piece_type == Piece_Type::None && piece.position.x != position.x
+        {
+            let catch_position = Position{ x: position.x, y: piece.position.y };
+
+            place_piece(board, &empty_piece(&catch_position));
+        }
+    }
+}
+
 pub fn add_vertical_and_horizontal_moves(board: &Board, piece: &Piece, possible_moves: &mut Vec<Position>)
 {
     add_moves_in_line(board, piece, possible_moves, 1, 0);
@@ -214,4 +246,108 @@ pub fn add_single_move(board: &Board, piece: &Piece, position: &Position, possib
             (*possible_moves).push(position.clone());
         }
     }
+}
+
+
+pub fn check(board: &Board, player: Color) -> bool
+{
+    let mut enemy_color = Color::Black;
+
+    if player == Color::Black
+    {
+        enemy_color = Color::White;
+    }
+
+
+    let mut king_position = Position{ x: -1, y: -1 };
+
+    for piece in board.pieces.iter()
+    {
+        if piece.piece_type == Piece_Type::King && piece.piece_color == player
+        {
+            king_position = piece.position.clone();
+
+            break;
+        }
+    }
+
+
+    let mut enemy_moves: Vec<Position> = vec![];
+
+    for piece in board.pieces.iter()
+    {
+        if piece.piece_color == enemy_color
+        {
+            let piece_moves = get_all_moves(board, &piece);
+
+            for position in piece_moves
+            {
+                enemy_moves.push(position);
+            }
+        }
+    }
+
+
+    for position in enemy_moves
+    {
+        if position == king_position
+        {
+            return true;
+        }
+    }
+
+
+    return false;
+}
+
+pub fn move_results_in_check(board: &Board, piece: &Piece, position: &Position, possible_moves: &Vec<Position>) -> bool
+{
+    let mut board_copy = board.clone();
+
+    make_move(&mut board_copy, piece, position, possible_moves);
+
+    return check(&board_copy, board.active_player.clone());
+}
+
+
+pub fn make_move(board: &mut Board, piece: &Piece, position: &Position, possible_moves: &Vec<Position>) -> bool
+{
+    reset_en_passant(board);
+
+    for move_position in possible_moves
+    {
+        if move_position.x == position.x && move_position.y == position.y
+        {
+            add_en_passant(board, piece, position);
+
+            catch_with_en_passant(board, piece, position);
+
+            check_for_promotion(board, piece, position);
+
+
+            place_piece(board, &empty_piece(&piece.position));
+
+            let mut new_piece = piece.clone();
+
+            new_piece.position = position.clone();
+            new_piece.move_count += 1;
+
+            place_piece(board, &new_piece);
+
+
+            if board.active_player == Color::White
+            {
+                board.active_player = Color::Black;
+            }
+            else
+            {
+                board.active_player = Color::White;
+            }
+
+
+            return true;
+        }
+    }
+
+    return false;
 }

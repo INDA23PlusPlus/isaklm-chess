@@ -84,6 +84,7 @@ pub struct Piece // a piece on the board, empty squares have None pieces
     pub move_count: i32
 }
 
+#[derive(Debug, PartialEq, Eq)]
 #[derive(Clone)]
 pub struct Position
 {
@@ -102,5 +103,7 @@ pub struct Board
     pub white_en_passant_moves: Vec<bool>,
     pub black_en_passant_moves: Vec<bool>,
 
-    pub promotion: bool
+    pub promotion: bool,
+
+    pub checkmate: Color
 }
