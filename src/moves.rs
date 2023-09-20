@@ -357,3 +357,49 @@ pub fn make_move(board: &mut Board, piece: &Piece, position: &Position, possible
 
     return false;
 }
+
+
+// tests
+
+#[cfg(test)]
+mod tests
+{
+    use crate::board::*;
+    use crate::board_initialization::*;
+    use crate::moves::*;
+
+    #[test]
+    fn test_moves()
+    {
+        let board = create_board();
+
+        for piece in board.pieces.iter()
+        {
+            let possible_moves = get_all_moves(&board, &piece);
+
+            for position in possible_moves.iter()
+            {
+                if position.x < 0 || position.x > 7 || position.y < 0 || position.y > 7
+                {
+                    panic!("moves outside board!");
+                }
+
+                if piece.piece_color == board_piece(&board, &position).piece_color
+                {
+                    panic!("move to piece of same color!");
+                }
+            }
+
+
+            let valid_moves = get_valid_moves(&board, &piece);
+
+            for position in valid_moves.iter()
+            {
+                if move_results_in_check(&board, &piece, &position, &valid_moves)
+                {
+                    panic!("move results in check!");
+                }
+            }
+        }
+    }
+}

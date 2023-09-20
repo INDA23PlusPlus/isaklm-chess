@@ -1,5 +1,6 @@
 #![allow(unused_imports)]
 #![allow(dead_code)]
+#![allow(non_camel_case_types)]
 
 mod board;
 mod board_initialization;
