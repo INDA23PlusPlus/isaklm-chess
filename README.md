@@ -1,6 +1,6 @@
 __HOW TO USE__
 
-First initialize the board:
+First initialize the board:\
   **let mut board = create_board();**
 
 
