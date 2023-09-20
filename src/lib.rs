@@ -22,7 +22,7 @@ use std::io;
 // an example of how the api could be used
 pub fn example_program()
 {
-    let mut board: Board = create_board(); // start by creating the board, make it mutable
+    let mut board = create_board(); // start by creating the board, make it mutable
 
     loop
     {
@@ -67,7 +67,7 @@ pub fn example_program()
             }
             else // if the player does not castle, then play some other move
             {
-                play_game(&mut board);
+                play_move(&mut board);
 
                 break;
             }
@@ -92,9 +92,9 @@ pub fn example_program()
     }
 }
 
-fn play_game(board: &mut Board)
+fn play_move(board: &mut Board)
 {
-    let mut piece = Piece{ piece_type: Piece_Type::None, piece_color: Color::None, position: Position{ x: 0, y: 0 }, move_count: 0 };
+    let mut piece = empty_piece(&Position{ x: 0, y: 0 });
 
     loop
     {
