@@ -91,23 +91,30 @@ pub fn castle(board: &mut Board, queenside: bool) -> bool
             king.move_count += 1;
             rook.move_count += 1;
 
+            
+            let mut board_copy = board.clone();
 
-            place_piece(board, &king);
-            place_piece(board, &rook);
-            place_piece(board, &empty_piece(&king_position));
-            place_piece(board, &empty_piece(&rook_position));
+            place_piece(&mut board_copy, &king);
+            place_piece(&mut board_copy, &rook);
+            place_piece(&mut board_copy, &empty_piece(&king_position));
+            place_piece(&mut board_copy, &empty_piece(&rook_position));
 
 
-            if board.active_player == Color::White
+            if !check(&board_copy, board.active_player.clone())
             {
-                board.active_player = Color::Black;
-            }
-            else
-            {
-                board.active_player = Color::White;
-            }
+                *board = board_copy;
 
-            return true;
+                if board.active_player == Color::White
+                {
+                    board.active_player = Color::Black;
+                }
+                else
+                {
+                    board.active_player = Color::White;
+                }
+
+                return true;
+            }
         }
     }
 
