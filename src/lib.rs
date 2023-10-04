@@ -2,13 +2,13 @@
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
 
-mod board;
-mod board_initialization;
-mod selection;
-mod moves;
-mod castling;
-mod promotion;
-mod checkmate;
+pub mod board;
+pub mod board_initialization;
+pub mod selection;
+pub mod moves;
+pub mod castling;
+pub mod promotion;
+pub mod checkmate;
 
 use board::*;
 use board_initialization::*;
